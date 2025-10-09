@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="id">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Perpustakaan Mini</title>
+	<style>
+		:root{--accent:#2b6cb0;--muted:#6b7280;--bg:#f7fafc}
+		body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);margin:0;color:#111}
+		.container{max-width:980px;margin:28px auto;padding:20px;background:#fff;border-radius:10px;box-shadow:0 6px 18px rgba(12,18,32,0.08)}
+		header{display:flex;align-items:center;justify-content:space-between;gap:16px}
+		h1{margin:0;font-size:20px}
+		.controls{display:flex;gap:12px;align-items:center}
+		input[type=text],input[type=number],select{padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px}
+		button{background:var(--accent);color:#fff;padding:8px 12px;border:0;border-radius:8px;cursor:pointer}
+		button.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+		form{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+		table{width:100%;border-collapse:collapse;margin-top:16px}
+		th,td{padding:10px;border-bottom:1px solid #eef2f7;text-align:left}
+		th{background:#fbfdff;color:var(--muted);font-weight:600}
+		.muted{color:var(--muted);font-size:13px}
+		.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eef2ff;color:#143f6b;font-weight:600}
+		.empty{padding:28px;text-align:center;color:var(--muted)}
+		a{color:var(--accent);text-decoration:none}
+		@media (max-width:720px){form{grid-template-columns:1fr}header{flex-direction:column;align-items:flex-start}}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<header>
+			<div>
+				<h1>Perpustakaan Mini</h1>
+				<div class="muted">Kelola koleksi buku, pinjam, kembalikan, dan cari dengan cepat.</div>
+			</div>
+			<div class="controls">
+				<input id="search" type="text" placeholder="Cari judul, penulis, ISBN, sumber..." />
+				<select id="filterSourceType" title="Filter tipe sumber">
+					<option value="">Semua sumber</option>
+					<option value="legal">Legal</option>
+					<option value="local">Lokal</option>
+					<option value="private">Pribadi</option>
+				</select>
+				<button id="resetStorage" class="ghost" title="Reset data">Reset</button>
+			</div>
+		</header>
+
+		<section aria-labelledby="add-heading">
+			<h2 id="add-heading" style="font-size:14px;margin-top:18px">Tambah / Edit Buku</h2>
+			<form id="bookForm">
+				<input id="title" type="text" placeholder="Judul buku" required />
+				<input id="author" type="text" placeholder="Penulis" required />
+				<input id="year" type="number" placeholder="Tahun (contoh: 2020)" min="1000" max="9999" />
+				<input id="isbn" type="text" placeholder="ISBN (opsional)" />
+				<input id="quantity" type="number" placeholder="Jumlah (stok)" min="1" value="1" />
+				<input id="source" type="text" placeholder="Link sumber (mis. https://...)" />
+				<select id="sourceType">
+					<option value="">Tipe sumber (pilih)</option>
+					<option value="legal">Legal</option>
+					<option value="local">Lokal</option>
+					<option value="private">Pribadi</option>
+				</select>
+				<input id="hiddenId" type="hidden" />
+				<div style="grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end">
+					<button type="submit">Simpan</button>
+					<button type="button" id="clearForm" class="ghost">Batal</button>
+				</div>
+			</form>
+		</section>
+
+		<section aria-labelledby="list-heading">
+			<h2 id="list-heading" style="font-size:14px;margin-top:18px">Daftar Buku <span id="count" class="pill">0</span></h2>
+			<div id="listWrap">
+				<table id="booksTable" aria-describedby="list-heading">
+					<thead>
+						<tr>
+							<th>Judul</th>
+							<th>Penulis</th>
+							<th>Tahun</th>
+							<th>ISBN</th>
+							<th>Sumber</th>
+							<th>Tipe</th>
+							<th>Stok</th>
+							<th>Aksi</th>
+						</tr>
+					</thead>
+					<tbody id="booksBody">
+						<!-- rows injected -->
+					</tbody>
+				</table>
+			</div>
+		</section>
+	</div>
+
+	<script>
+		// Simple client-side perpustakaan using localStorage
+		const LS_KEY = 'perpus_books_v1';
+		const $ = sel => document.querySelector(sel);
+		const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+		function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+
+		function loadBooks(){
+			try{const raw=localStorage.getItem(LS_KEY);return raw?JSON.parse(raw):[];}catch(e){console.error(e);return[]}
+		}
+		function saveBooks(list){localStorage.setItem(LS_KEY,JSON.stringify(list));}
+
+		function normalizeLink(href){
+			if(!href) return '';
+			const s = href.trim();
+			if(/^https?:\/\//i.test(s)) return s;
+			return '';
+		}
+
+		function capitalize(s){ if(!s) return ''; return s.charAt(0).toUpperCase()+s.slice(1) }
+		function renderSource(src){ if(!src) return ''; const href = normalizeLink(src); if(href) return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(href)}</a>`; return escapeHtml(src) }
+
+		function renderBooks(filter='', sourceTypeFilter=''){
+			const tbody = $('#booksBody'); tbody.innerHTML='';
+			let books = loadBooks();
+			if(filter && filter.trim()){const q=filter.toLowerCase();books=books.filter(b=>[b.title,b.author,b.isbn,b.year,b.source,b.sourceType].join(' ').toLowerCase().includes(q))}
+			if(sourceTypeFilter){books = books.filter(b=> (b.sourceType||'').toLowerCase() === sourceTypeFilter.toLowerCase())}
+			$('#count').textContent = books.length;
+			if(books.length===0){tbody.innerHTML='<tr><td colspan="8" class="empty">Tidak ada buku. Tambahkan buku baru di form di atas.</td></tr>';return}
+			for(const b of books){
+				const tr=document.createElement('tr');
+				tr.innerHTML = `
+					<td><strong>${escapeHtml(b.title)}</strong></td>
+					<td>${escapeHtml(b.author)}</td>
+					<td>${b.year||''}</td>
+					<td>${b.isbn||''}</td>
+					<td>${renderSource(b.source)}</td>
+					<td>${escapeHtml(capitalize(b.sourceType||''))}</td>
+					<td>${b.quantity - (b.borrowed||0)}</td>
+					<td>
+						<button data-id="${b.id}" class="borrow">Pinjam</button>
+						<button data-id="${b.id}" class="return">Kembalikan</button>
+						<button data-id="${b.id}" class="edit">Edit</button>
+						<button data-id="${b.id}" class="delete">Hapus</button>
+					</td>
+				`;
+				tbody.appendChild(tr);
+			}
+		}
+
+		function escapeHtml(s){if(!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+
+		function addOrUpdateBook(data){
+			const list = loadBooks();
+			if(data.id){ // update
+				const idx = list.findIndex(x=>x.id===data.id);
+				if(idx>=0){list[idx] = Object.assign(list[idx], data);} 
+			} else {
+				data.id = uid(); data.borrowed = 0; list.unshift(data);
+			}
+			saveBooks(list);
+			renderBooks($('#search').value, $('#filterSourceType').value);
+		}
+
+		function borrowBook(id){
+			const list = loadBooks(); const b = list.find(x=>x.id===id); if(!b) return;
+			const available = (b.quantity||0) - (b.borrowed||0);
+			if(available<=0){alert('Stok tidak cukup untuk dipinjam.');return}
+			b.borrowed = (b.borrowed||0)+1; saveBooks(list); renderBooks($('#search').value, $('#filterSourceType').value);
+		}
+
+		function returnBook(id){
+			const list = loadBooks(); const b = list.find(x=>x.id===id); if(!b) return;
+			if((b.borrowed||0) <= 0){alert('Tidak ada barang yang dipinjam dari buku ini.');return}
+			b.borrowed -= 1; saveBooks(list); renderBooks($('#search').value, $('#filterSourceType').value);
+		}
+
+		function deleteBook(id){
+			if(!confirm('Hapus buku ini?')) return;
+			const list = loadBooks().filter(x=>x.id!==id); saveBooks(list); renderBooks($('#search').value, $('#filterSourceType').value);
+		}
+
+		function editBook(id){
+			const b = loadBooks().find(x=>x.id===id); if(!b) return;
+			$('#title').value = b.title; $('#author').value = b.author; $('#year').value = b.year||''; $('#isbn').value = b.isbn||''; $('#quantity').value = b.quantity||1; $('#source').value = b.source||''; $('#sourceType').value = b.sourceType||''; $('#hiddenId').value = b.id; window.scrollTo({top:0,behavior:'smooth'});
+		}
+
+		// event wiring
+		document.addEventListener('click', e=>{
+			const id = e.target.dataset?.id;
+			if(e.target.matches('button.borrow')) borrowBook(id);
+			if(e.target.matches('button.return')) returnBook(id);
+			if(e.target.matches('button.delete')) deleteBook(id);
+			if(e.target.matches('button.edit')) editBook(id);
+		});
+
+		$('#bookForm').addEventListener('submit', e=>{
+			e.preventDefault();
+			const data = {
+				id: $('#hiddenId').value || undefined,
+				title: $('#title').value.trim(),
+				author: $('#author').value.trim(),
+				year: $('#year').value ? Number($('#year').value) : undefined,
+				isbn: $('#isbn').value.trim(),
+				quantity: Math.max(1, Number($('#quantity').value) || 1),
+				source: $('#source').value.trim(),
+				sourceType: $('#sourceType').value || ''
+			};
+			if(!data.title || !data.author){alert('Judul dan penulis wajib diisi.');return}
+			addOrUpdateBook(data);
+			$('#bookForm').reset(); $('#hiddenId').value='';
+		});
+
+		$('#clearForm').addEventListener('click', ()=>{ $('#bookForm').reset(); $('#hiddenId').value=''; });
+		$('#search').addEventListener('input', ()=>renderBooks($('#search').value, $('#filterSourceType').value));
+		$('#filterSourceType').addEventListener('change', ()=>renderBooks($('#search').value, $('#filterSourceType').value));
+		$('#resetStorage').addEventListener('click', ()=>{if(confirm('Reset semua data perpustakaan?')){localStorage.removeItem(LS_KEY);init();}});
+
+		// seed sample data if empty (only first time)
+		function init(){
+			if(!localStorage.getItem(LS_KEY)){
+				const sample = [
+					{id:uid(),title:'Laskar Pelangi',author:'Andrea Hirata',year:2005,isbn:'978-602-03-0630-2',quantity:3,borrowed:0,source:'https://example.com/laskar-pelangi',sourceType:'legal'},
+					{id:uid(),title:'Atomic Habits',author:'James Clear',year:2018,isbn:'978-184-794-9',quantity:2,borrowed:0,source:'https://example.com/atomic-habits',sourceType:'legal'},
+					{id:uid(),title:'Belajar JavaScript',author:'Anonim',year:2021,isbn:'',quantity:4,borrowed:1,source:'File lokal',sourceType:'local'}
+				];
+				saveBooks(sample);
+			}
+			renderBooks($('#search').value, $('#filterSourceType').value);
+		}
+
+		// initial
+		init();
+	</script>
+</body>
+</html>
