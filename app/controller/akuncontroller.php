@@ -1,7 +1,11 @@
 <?php
 require_once "app/model/User.php";
 
+<<<<<<< HEAD:app/controller/authcontroller.php
 class Authcontroller {
+=======
+class Akun {
+>>>>>>> 4fbdd005cd8c035196126f15eb542d4d1c9f5059:app/controller/akuncontroller.php
     private $userModel;
     public function __construct() {
         session_start();
