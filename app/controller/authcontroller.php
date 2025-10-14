@@ -1,7 +1,7 @@
 <?php
 require_once "app/model/User.php";
 
-class AuthController {
+class Authcontroller {
     private $userModel;
     public function __construct() {
         session_start();
