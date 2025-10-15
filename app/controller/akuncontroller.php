@@ -1,6 +1,5 @@
 <?php
 require_once "app/model/User.php";
-
 class Akun {
     private $userModel;
     public function __construct() {

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Web Perpustakaan Elektrik</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/29/29302.png" type="image/png" />
+</head>
+<body>
+  <div id="auth-section">
+    <h1>Login / Signup</h1>
+    <input type="text" id="username" placeholder="Username" autocomplete="off" />
+    <input type="password" id="password" placeholder="Password" autocomplete="off" />
+    <div>
+      <button id="login-btn">Login</button>
+      <button id="signup-btn">Signup</button>
+    </div>
+    <p id="auth-msg"></p>
+  </div>
+
+  <div id="library-section" style="display:none;">
+    <div class="header-lib">
+      <h2>Perpustakaan Elektrik</h2>
+      <button id="logout-btn">Logout</button>
+    </div>
+
+    <!-- Form tambah buku -->
+    <div id="add-book-section">
+      <h3>Tambah Buku Baru</h3>
+      <input type="text" id="new-title" placeholder="Judul Buku" autocomplete="off" />
+      <input type="text" id="new-author" placeholder="Penulis" autocomplete="off" />
+      <input type="text" id="new-image" placeholder="URL Gambar Buku" autocomplete="off" />
+      <input type="number" id="new-stock" placeholder="Stok Buku" min="1" />
+      <button id="add-book-btn">Tambah Buku</button>
+      <p id="add-book-msg" class="msg"></p>
+    </div>
+
+    <!-- List buku -->
+    <div id="book-list"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
