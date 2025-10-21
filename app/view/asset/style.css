@@ -49,6 +49,27 @@ body{
 .category{font-size:0.8rem;color:var(--accent-2);font-weight:600}
 
 .btn{padding:0.45rem 0.6rem;border-radius:8px;border:0;cursor:pointer}
+.btn-accent {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius);
+    border: none;
+    box-shadow: var(--shadow);
+    text-decoration: none;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-accent:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+}
+
+.btn-accent:active {
+    transform: translateY(0);
+    background: #1e40af;
+}
 .btn-outline{background:transparent;border:1px solid rgba(15,23,42,0.06)}
 
 .about{padding:2rem 0 4rem}
