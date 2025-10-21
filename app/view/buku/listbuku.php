@@ -1,5 +1,5 @@
 <h2>Daftar Buku</h2>
-<a href="index.php?action=create">Tambah Buku</a>
+<a href="../public/index.php?action=create">Tambah dfgdfgfggfBuku</a>
 <table border="1" cellpadding="6">
     <tr><th>ID</th><th>Buku</th><th>Author</th></th>Tahun<th><th>Aksi</th></tr>
     <?php foreach ($data as $row): ?>
