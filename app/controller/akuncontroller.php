@@ -1,5 +1,5 @@
 <?php
-require_once "app/model/User.php";
+require_once __DIR__ . '/../model/user.php';
 class Akun {
     private $userModel;
     public function __construct() {

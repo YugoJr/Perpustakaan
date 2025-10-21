@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../controller/akuncontroller.php'; // sesuaikan path
 session_start();
 
 $db = new Database();
-$conn = $db->connect();
+$conn = $db->getConnection();
 
 $errors = [];
 
@@ -19,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$identifier, $identifier]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             if ($user && password_verify($password, $user['password'])) {
-                // Login sukses
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 header('Location: /perpustakaanbuku/'); // arahkan ke dashboard
@@ -33,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 <?php foreach ($errors as $err): ?>
     <div style="color:red;"><?php echo htmlspecialchars($err); ?></div>
 <?php endforeach; ?>

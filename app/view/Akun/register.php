@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../controller/akuncontroller.php'; // sesuaikan jika lokasi berbeda
 $db = new Database();
-$conn = $db->connect();
+$conn = $db->getConnection();
 
 $errors = [];
 $success = '';
@@ -35,7 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         } catch (Exception $e) {
-            // jangan tampilkan $e->getMessage() ke user pada produksi
             $errors[] = 'Terjadi kesalahan pada server.';
         }
     }
