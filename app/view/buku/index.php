@@ -42,7 +42,7 @@
             <p class="muted small">Menampilkan koleksi contoh. Gunakan pencarian untuk menyaring.</p>
 <a href="../public/index.php?action=create">Tambah Buku</a>
 <table border="1" cellpadding="6">
-    <tr><th>ID</th><th>Buku</th><th>Author</th></th>Tahun<th><th>Aksi</th></tr>
+    <tr><th>ID</th><th>Buku</th><th>Author</th><th>Tahun</th><th>Aksi</th></tr>
     <?php foreach ($data as $row): ?>
         <tr>
             <td><?= $row['id']; ?></td>
