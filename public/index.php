@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/Controller/bookController.php';
+require_once __DIR__ . '/../app/controller/BookController.php';
 
 
 $controller = new bukuController();

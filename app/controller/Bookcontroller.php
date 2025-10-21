@@ -23,7 +23,8 @@ class bukuController {
         $data = $this->model->tampilbuku();
 
         // Menyertakan (include) file tampilan siswa_list.php untuk menampilkan data ke pengguna.
-        include __DIR__ . '/../View/buku/listbuku.php';
+        include __DIR__ . '/../view/buku/index.php';
+       
     }
 
     // Method create() digunakan untuk menambah data baru.
